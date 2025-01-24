@@ -10,3 +10,17 @@
     当然，你也可以直接下载zip文件，然后解压到你的本地。
 
 2. 然后。。。暂时还没想好，李游仍在编写
+
+
+## 项目介绍
+
+### 学习路线见思维导图
+这个需要用Xmind打开 或者 在线 ProcessOn网站
+
+### 还没想好... 
+
+
+# 记录 
+开始日期 2025.1.25
+- [ ] 任务一 Python数据分析 https://github.com/iamseancheney/python_for_data_analysis_2nd_chinese_version
+
