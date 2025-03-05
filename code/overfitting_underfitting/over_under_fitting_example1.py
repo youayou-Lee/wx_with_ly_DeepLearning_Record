@@ -42,15 +42,14 @@ def train(train_features, test_features, train_labels, test_labels, num_epochs=1
 
     # 使用前you个特征
     train_f = train_features[:, :you].to(device)
-    test_f = test_features[:, :you].to(device)
-
+    test_features_f = test_features[:, :you].to(device)
     # 模型：包含偏置项（由第0维特征x^0=1充当）
     net = torch.nn.Linear(you, 1, bias=False).to(device)
     torch.nn.init.normal_(net.weight, mean=0, std=0.01)
 
     trainer = torch.optim.SGD(net.parameters(), lr=lr)
-    train_ls, test_ls = [], []
-
+    train_ls = []
+    all_loss = 0
     for epoch in range(num_epochs):
         # 随机打乱数据
         indices = torch.randperm(train_f.size(0))
@@ -64,21 +63,26 @@ def train(train_features, test_features, train_labels, test_labels, num_epochs=1
             l = loss(net(X), y.reshape(-1, 1))
             l.backward()
             trainer.step()
+            all_loss += l.sum().item()
 
         # 记录损失
-        train_ls.append(loss(net(train_f), train_labels.reshape(-1, 1)).item())
-        test_ls.append(loss(net(test_f), test_labels.reshape(-1, 1)).item())
-        print(f'Epoch {epoch}, Train Loss: {train_ls[-1]:.4f}, Test Loss: {test_ls[-1]:.4f}')
+        train_ls.append(all_loss / batch_size)
+        all_loss = 0
+        print(f'Epoch {epoch}, Train Loss: {train_ls[-1]:.4f})')
 
     # 绘制损失曲线和预测结果
-    plt.plot(train_ls, label='Train Loss')
-    plt.plot(test_ls, label='Test Loss')
+    plt.plot(range(num_epochs), train_ls, label='Train Loss')
     plt.legend()
     plt.show()
 
+    evaluate(test_features_f, test_labels, net)
+
+def evaluate(test_features, test_labels, net):
+
+
     # 绘制预测与标签对比（取第一个多项式特征，即x）
-    plt.scatter(train_f[:, 1].cpu(), train_labels.cpu(), label='True')
-    plt.scatter(train_f[:, 1].cpu(), net(train_f).detach().cpu(), label='Predicted')
+    plt.scatter(test_features[:, 1].cpu(), test_labels.cpu(), label='True')
+    plt.scatter(test_features[:, 1].cpu(), net(test_features).detach().cpu(), label='Predicted')
     plt.legend()
     plt.show()
 

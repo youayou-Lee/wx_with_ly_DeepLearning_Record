@@ -15,7 +15,7 @@ num_outputs = 10
 W = torch.normal(0, 0.01, (num_inputs, num_outputs), device=device, requires_grad=True)
 b = torch.zeros(num_outputs, device=device, requires_grad=True)
 def softmax(X):
-    """input size: [m * n], outpu size: [m * 1]"""
+    """input size: [m * n], outpu size: [m * n]"""
     X_exp = torch.exp(X)
     # sum 中axis = 1，表示对每一行进行求和，keepdim=True 表示返回的 Tensor 与 X 的形状相同
     partition = X_exp.sum(1, keepdim=True)
