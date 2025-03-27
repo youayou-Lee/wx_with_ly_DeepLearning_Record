@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 from matplotlib import pyplot as plt
+import collections
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def evaluate_accuracy(net, data_iter, device=device):
@@ -55,3 +57,65 @@ def train(net, train_iter, test_iter, num_epochs, lr=0.5, device=device, evaluat
     plt.plot(range(1, num_epochs + 1), train_epoch_acc, label='Train Acc')
     plt.plot(range(1, num_epochs + 1), test_epoch_acc, label='Test Acc')
     plt.show()
+
+
+def train_regression(net, train_iter, loss, num_epochs, lr, device=device):
+    def evaluate_loss(data_iter, net, loss, device):
+        net.eval()
+        loss_sum, n = 0.0, 0
+        with torch.no_grad():
+            for X, y in data_iter:
+                X, y = X.to(device), y.to(device)
+                l = loss(net(X), y)
+                loss_sum += l.sum().item()
+                n += y.numel()
+        return loss_sum / n
+
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    net = net.to(device)
+    for epoch in range(num_epochs):
+        for X, y in train_iter:
+            X, y = X.to(device), y.to(device)
+            l = loss(net(X), y)
+            optimizer.zero_grad()
+            l.backward()
+            optimizer.step()
+        print(f'epoch {epoch + 1}, loss {evaluate_loss(train_iter, net, loss, device)}')
+
+def load_array(features, labels, batch_size, is_train=True):
+    dataset = torch.utils.data.TensorDataset(*(features, labels))
+    return torch.utils.data.DataLoader(dataset, batch_size, shuffle=is_train)
+
+def load_seq_data():
+    import re
+    path = r"..\seq.txt"
+    with open(path, 'r') as f:
+        lines = f.readlines()
+    all_data = list(filter(lambda x: x != '',[re.sub('[^A-Za-z.]+', ' ', line).strip().lower() for line in lines]))
+
+    you = Vocab(all_data)
+    return you
+
+class Vocab:
+
+    def __init__(self, words):
+        self.words = words
+        # 把所有词放入一个list中，然后计算每个词出现的次数
+        words = [word for token_list in words for word in token_list.split(" ")]
+        counter = collections.Counter(words)
+        unk_times = len([x for x in counter.items() if x[1] == 1])
+        self._token_freqs = list(filter(lambda x: x[1] > 1, counter.items()))
+        self._token_freqs.append(('<unk>', unk_times))
+        self._token_freqs = sorted(self._token_freqs, key=lambda x: x[1], reverse=True)
+
+    def __len__(self):
+        return len(self._token_freqs)
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._token_freqs[item][0]
+        if isinstance(item, str):
+            return self._token_freqs.index(item)
+
+if __name__ == '__main__':
+    print(load_seq_data()._token_freqs)
